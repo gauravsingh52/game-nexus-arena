@@ -153,14 +153,14 @@ const Index = () => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
               >
-                <Link to={`/games/${game.slug}`}>
+                <Link to={game.route}>
                   <div className="group relative p-6 rounded-2xl border border-border bg-card/50 hover:border-primary/40 transition-all duration-300 hover:shadow-[0_0_40px_hsl(220_90%_56%/0.08)] cursor-pointer">
                     <div className="text-4xl mb-4">{game.icon}</div>
                     <h3 className="font-display text-lg font-bold tracking-wider mb-1">{game.name}</h3>
                     <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{game.description}</p>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-heading px-2 py-0.5 rounded-full border border-border bg-muted/50 capitalize">{game.category}</span>
-                      <span className="text-xs font-heading px-2 py-0.5 rounded-full border border-border bg-muted/50">{game.difficulty}</span>
+                      <span className="text-xs font-heading px-2 py-0.5 rounded-full border border-border bg-muted/50 capitalize">{game.difficulty}</span>
                     </div>
                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                       <ArrowRight className="h-5 w-5 text-primary" />
