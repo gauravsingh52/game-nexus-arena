@@ -14,16 +14,245 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          criteria_type: string
+          criteria_value: number
+          description: string | null
+          icon: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          criteria_type: string
+          criteria_value?: number
+          description?: string | null
+          icon?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          criteria_type?: string
+          criteria_value?: number
+          description?: string | null
+          icon?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      friendships: {
+        Row: {
+          created_at: string
+          friend_id: string
+          id: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          friend_id: string
+          id?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          friend_id?: string
+          id?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      games: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          difficulty: string
+          icon: string | null
+          id: number
+          name: string
+          slug: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          difficulty: string
+          icon?: string | null
+          id?: number
+          name: string
+          slug: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          icon?: string | null
+          id?: number
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: number
+          message: string | null
+          read: boolean
+          recipient_id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          message?: string | null
+          read?: boolean
+          recipient_id: string
+          title: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          message?: string | null
+          read?: boolean
+          recipient_id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          id: string
+          level: string | null
+          total_points: number | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          id: string
+          level?: string | null
+          total_points?: number | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          id?: string
+          level?: string | null
+          total_points?: number | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      scores: {
+        Row: {
+          accuracy: number | null
+          completion_time: number | null
+          created_at: string
+          game_slug: string
+          id: number
+          score: number
+          user_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          completion_time?: number | null
+          created_at?: string
+          game_slug: string
+          id?: number
+          score?: number
+          user_id: string
+        }
+        Update: {
+          accuracy?: number | null
+          completion_time?: number | null
+          created_at?: string
+          game_slug?: string
+          id?: number
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: number
+          id: number
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: number
+          id?: number
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: number
+          id?: number
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +379,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
