@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Gamepad2, Trophy, LayoutDashboard, User, Menu, X, Bell } from "lucide-react";
+import { Gamepad2, Trophy, LayoutDashboard, User, Menu, X, Bell, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-
-const navLinks = [
-  { to: "/games", label: "Games", icon: Gamepad2 },
-  { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/profile", label: "Profile", icon: User },
-];
+import { useAuth } from "@/hooks/useAuth";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
+
+  const navLinks = [
+    { to: "/games", label: "Games", icon: Gamepad2, requiresAuth: false },
+    { to: "/leaderboard", label: "Leaderboard", icon: Trophy, requiresAuth: false },
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, requiresAuth: true },
+    { to: "/profile", label: "Profile", icon: User, requiresAuth: true },
+  ].filter((link) => !link.requiresAuth || user);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -47,22 +49,28 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-            <Bell className="h-4 w-4" />
-          </Button>
-          <Link to="/auth">
-            <Button className="gradient-neon glow-blue font-heading tracking-wide text-sm">
-              Sign In
-            </Button>
-          </Link>
+          {user ? (
+            <>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                <Bell className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="text-muted-foreground hover:text-foreground font-heading gap-1"
+              >
+                <LogOut className="h-4 w-4" /> Sign Out
+              </Button>
+            </>
+          ) : (
+            <Link to="/auth">
+              <Button className="gradient-neon glow-blue font-heading tracking-wide text-sm">Sign In</Button>
+            </Link>
+          )}
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden text-foreground"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
+        <Button variant="ghost" size="icon" className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
@@ -84,9 +92,15 @@ const Navbar = () => {
                   </Button>
                 </Link>
               ))}
-              <Link to="/auth" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full gradient-neon glow-blue font-heading mt-2">Sign In</Button>
-              </Link>
+              {user ? (
+                <Button onClick={() => { signOut(); setMobileOpen(false); }} variant="outline" className="w-full font-heading mt-2 gap-1">
+                  <LogOut className="h-4 w-4" /> Sign Out
+                </Button>
+              ) : (
+                <Link to="/auth" onClick={() => setMobileOpen(false)}>
+                  <Button className="w-full gradient-neon glow-blue font-heading mt-2">Sign In</Button>
+                </Link>
+              )}
             </div>
           </motion.div>
         )}
