@@ -1,84 +1,84 @@
 
 
-## Plan: Database Setup, Auth, Route Protection, and Landing Page Redesign
+## Plan: Dynamic Landing Page Redesign + 5 New Games (10 Total)
 
-### Problem Summary
-1. Build errors in `chart.tsx` due to recharts v3 type incompatibilities (component was written for v2)
-2. Profile, Dashboard, and Leaderboard pages show fake/mock data and are accessible without login
-3. Landing page needs a complete redesign
-4. Database has no tables yet -- need full schema setup
+### Current State
+- 5 working games: Memory Match, Speed Typer, Quiz Challenge, Reaction Time, Math Blitz
+- Landing page is functional but static with basic card layouts
+- Dark gaming theme with neon accents already in place
 
-### Phase 1: Fix Build Errors
-- Downgrade `recharts` to `^2.15.0` (chart.tsx component is built for v2 API)
-- This resolves all 5 type errors in `chart.tsx`
+### Part 1: Landing Page Overhaul
 
-### Phase 2: Database Schema (Supabase Migration)
-Create all tables with RLS enabled:
+Completely redesign `src/pages/Index.tsx` with heavy animation and gaming graphics:
 
-```text
-profiles         -> id (UUID, FK auth.users), username, avatar_url, bio, level, total_points, created_at
-games            -> id (serial), name, slug, category, difficulty, description, icon
-scores           -> id (serial), user_id (FK auth.users), game_slug, score, completion_time, accuracy, created_at
-achievements     -> id (serial), name, description, icon, criteria_type, criteria_value
-user_achievements-> id (serial), user_id (FK auth.users), achievement_id (FK achievements), unlocked_at
-user_roles       -> id (UUID), user_id (FK auth.users), role (app_role enum: admin/moderator/user)
-friendships      -> id (serial), user_id, friend_id, status (pending/accepted/declined), created_at
-notifications    -> id (serial), recipient_id, type, title, message, read, created_at
-```
+- **Animated particle/floating elements background** -- CSS-based floating neon orbs, grid lines, and scanline effects throughout the page
+- **Hero section** -- Massive glitching text effect on "NEXUS ARENA" using CSS keyframes, animated controller/gamepad SVG graphic, pulsing neon border, typing animation on tagline
+- **Animated stats counter** -- Numbers that count up on scroll using `useIntersectionObserver` + `useState` animation (e.g., "10+ Games", "Live Rankings", "24/7")
+- **Game carousel/showcase** -- Horizontal scrollable game cards with 3D tilt hover effect (CSS perspective transform), glowing card borders that pulse, animated icons
+- **How it works** -- Animated timeline with connecting neon lines, step icons that animate in sequence
+- **Features grid** -- Cards with animated icon backgrounds (rotating/pulsing), glassmorphism effect
+- **Testimonials/social proof** -- Animated avatar stack, marquee-style scrolling player names
+- **Final CTA** -- Large pulsing button with ring animation, background energy wave effect
+- **Footer** -- Neon divider line animation
 
-RLS policies:
-- profiles: public read, own-row update, auto-create via trigger on signup
-- scores: authenticated insert (own), public read for leaderboards
-- user_achievements: public read, system insert
-- user_roles: security definer function `has_role()` to prevent recursion
-- friendships/notifications: own-data only
+New CSS utilities in `src/index.css`:
+- `@keyframes glitch` -- text glitch effect
+- `@keyframes scanline` -- CRT scanline overlay
+- `@keyframes float-random` -- varied floating for particles
+- `@keyframes count-up` -- number counter
+- `@keyframes neon-pulse` -- border glow pulsing
 
-Database trigger: auto-create profile row on `auth.users` insert.
+### Part 2: 5 New Games
 
-Seed the `achievements` table with initial badges (First Win, Speed Demon, 7-Day Streak, etc.) and seed the `games` table with the 5 mini-games.
+Add 5 new fully functional games to reach 10 total:
 
-### Phase 3: Authentication System
-- Create `src/hooks/useAuth.tsx` -- context provider wrapping `supabase.auth.onAuthStateChange` and `getSession`
-- Wire up `Auth.tsx` page with real `signUp`, `signInWithPassword`, `resetPasswordForEmail`
-- Create `/reset-password` page for password recovery flow
-- Wrap App with `AuthProvider`
+**6. Snake Game** (`src/components/games/SnakeGame.tsx`)
+- Classic snake on a grid using canvas or div-based rendering
+- Arrow key controls, growing snake, random food spawning
+- Score based on length, increasing speed per level
+- Category: arcade, Difficulty: medium
 
-### Phase 4: Route Protection & Conditional Nav
-- Create `ProtectedRoute` component that redirects to `/auth` if not logged in
-- Wrap `/dashboard`, `/profile`, game play routes with `ProtectedRoute`
-- Update `Navbar`:
-  - Logged out: show only Games, Leaderboard, Sign In
-  - Logged in: show Games, Leaderboard, Dashboard, Profile, Sign Out
-- Remove ALL mock/fake data from Dashboard and Profile -- show empty states or real Supabase data
+**7. Whack-a-Mole** (`src/components/games/WhackAMole.tsx`)
+- 3x3 grid of holes, moles pop up randomly with decreasing intervals
+- Click/tap to whack, combo streaks for bonus points
+- 30-second rounds, score tracking
+- Category: action, Difficulty: easy
 
-### Phase 5: Landing Page Redesign
-Complete redesign with a more immersive dark gaming aesthetic:
-- **Hero section**: Large animated headline with particle/glow effects, prominent CTA buttons (Sign Up / Browse Games)
-- **Stats counter section**: Animated counters for total players, games played, active competitions
-- **Game showcase**: Interactive carousel/grid of the 5 mini-games with hover effects and play buttons
-- **How it works**: 3-step visual flow (Sign Up -> Play Games -> Climb Ranks)
-- **Leaderboard preview**: Show top 5 players from real data
-- **Testimonials/social proof section**: Player highlights
-- **Final CTA**: Bold call to action to join
-- **Footer**: Links, branding, social icons
+**8. Color Match** (`src/components/games/ColorMatch.tsx`)
+- Word shows a color name but rendered in a different color
+- Player must click whether the TEXT matches the COLOR (Stroop test)
+- Timed rounds, accuracy tracking
+- Category: puzzle, Difficulty: hard
 
-### Technical Details
+**9. Word Scramble** (`src/components/games/WordScramble.tsx`)
+- Scrambled letters, player rearranges to form the correct word
+- Hint system, timed scoring, difficulty progression
+- Category: puzzle, Difficulty: medium
 
-**Files to create:**
-- `src/hooks/useAuth.tsx` (auth context)
-- `src/components/ProtectedRoute.tsx`
-- `src/pages/ResetPassword.tsx`
+**10. Aim Trainer** (`src/components/games/AimTrainer.tsx`)
+- Targets appear at random positions in a play area
+- Click targets as fast as possible, targets shrink over time
+- Tracks accuracy (hits vs misses), average time per target
+- Category: action, Difficulty: hard
 
-**Files to modify:**
-- `package.json` (downgrade recharts)
-- `src/App.tsx` (add AuthProvider, ProtectedRoute, new route)
-- `src/components/layout/Navbar.tsx` (conditional nav based on auth)
-- `src/pages/Auth.tsx` (wire to real Supabase auth)
-- `src/pages/Dashboard.tsx` (remove mock data, fetch from Supabase)
-- `src/pages/Profile.tsx` (remove mock data, fetch from Supabase)
-- `src/pages/Leaderboard.tsx` (fetch real data from Supabase)
-- `src/pages/Index.tsx` (complete redesign)
-- `src/integrations/supabase/types.ts` (will auto-update after migration)
+### Files to Create
+- `src/components/games/SnakeGame.tsx`
+- `src/components/games/WhackAMole.tsx`
+- `src/components/games/ColorMatch.tsx`
+- `src/components/games/WordScramble.tsx`
+- `src/components/games/AimTrainer.tsx`
 
-**Migration SQL:** One migration creating all tables, RLS policies, trigger function, seed data, and `has_role` security definer function.
+### Files to Modify
+- `src/pages/Index.tsx` -- Complete redesign with animations
+- `src/index.css` -- New keyframe animations and utility classes
+- `src/data/games.ts` -- Add 5 new game entries
+- `src/App.tsx` -- Add 5 new routes
+- `tailwind.config.ts` -- Add new animation keyframes (glitch, scanline, neon-pulse)
+
+### Technical Notes
+- All animations use CSS keyframes + framer-motion (already installed)
+- No new dependencies needed
+- Each game follows the same pattern as existing games: standalone component with state management, score tracking, reset, and game-over screen
+- Snake game uses `useEffect` + `setInterval` for game loop with keyboard event listeners
+- All games use the existing dark theme and neon color palette
 
