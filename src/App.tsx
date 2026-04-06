@@ -19,6 +19,11 @@ import SpeedTyper from "./components/games/SpeedTyper";
 import QuizChallenge from "./components/games/QuizChallenge";
 import ReactionTime from "./components/games/ReactionTime";
 import MathBlitz from "./components/games/MathBlitz";
+import SnakeGame from "./components/games/SnakeGame";
+import WhackAMole from "./components/games/WhackAMole";
+import ColorMatch from "./components/games/ColorMatch";
+import WordScramble from "./components/games/WordScramble";
+import AimTrainer from "./components/games/AimTrainer";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +45,11 @@ const App = () => (
             <Route path="/games/quiz-challenge" element={<ProtectedRoute><QuizChallenge /></ProtectedRoute>} />
             <Route path="/games/reaction-time" element={<ProtectedRoute><ReactionTime /></ProtectedRoute>} />
             <Route path="/games/math-blitz" element={<ProtectedRoute><MathBlitz /></ProtectedRoute>} />
+            <Route path="/games/snake-game" element={<ProtectedRoute><SnakeGame /></ProtectedRoute>} />
+            <Route path="/games/whack-a-mole" element={<ProtectedRoute><WhackAMole /></ProtectedRoute>} />
+            <Route path="/games/color-match" element={<ProtectedRoute><ColorMatch /></ProtectedRoute>} />
+            <Route path="/games/word-scramble" element={<ProtectedRoute><WordScramble /></ProtectedRoute>} />
+            <Route path="/games/aim-trainer" element={<ProtectedRoute><AimTrainer /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
