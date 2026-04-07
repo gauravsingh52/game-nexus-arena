@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useScoreSaver } from "@/hooks/useScoreSaver";
 
 const TOTAL_TARGETS = 30;
 const AREA_W = 500;
@@ -18,6 +19,7 @@ const AimTrainer = () => {
   const [highScore, setHighScore] = useState(0);
   const spawnTime = useRef(0);
   const areaRef = useRef<HTMLDivElement>(null);
+  const { saveScore, resetSaver } = useScoreSaver();
 
   const spawnTarget = useCallback((num: number) => {
     const shrink = Math.max(20, 50 - num);
@@ -36,6 +38,7 @@ const AimTrainer = () => {
     setTimes([]);
     setGameOver(false);
     setPlaying(true);
+    resetSaver();
     spawnTarget(0);
   };
 
@@ -64,6 +67,12 @@ const AimTrainer = () => {
   const accuracy = hits + misses > 0 ? Math.round((hits / (hits + misses)) * 100) : 0;
   const finalScore = hits * 100 - misses * 50;
 
+  useEffect(() => {
+    if (gameOver && finalScore > 0) {
+      saveScore({ gameSlug: "aim-trainer", score: finalScore, accuracy: accuracy / 100, completionTime: avgTime });
+    }
+  }, [gameOver]);
+
   return (
     <div className="min-h-screen pt-20 pb-10 flex flex-col items-center">
       <div className="container max-w-xl">
@@ -78,7 +87,6 @@ const AimTrainer = () => {
           <span>AVG: <span className="text-neon-purple">{avgTime}ms</span></span>
         </div>
 
-        {/* Progress bar */}
         {playing && (
           <div className="w-full h-2 bg-muted rounded-full mb-4 overflow-hidden">
             <div className="h-full gradient-neon transition-all duration-300 rounded-full" style={{ width: `${(targetNum / TOTAL_TARGETS) * 100}%` }} />
@@ -91,7 +99,6 @@ const AimTrainer = () => {
           className="relative rounded-2xl border-2 border-border bg-card/50 overflow-hidden cursor-crosshair mx-auto"
           style={{ width: AREA_W, height: AREA_H, maxWidth: "100%" }}
         >
-          {/* Grid */}
           <div className="absolute inset-0 opacity-5" style={{
             backgroundImage: "radial-gradient(circle, hsl(220 90% 56%) 1px, transparent 1px)",
             backgroundSize: "25px 25px",

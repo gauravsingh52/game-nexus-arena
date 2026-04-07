@@ -4,6 +4,7 @@ import { ArrowLeft, RotateCcw, Clock, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useScoreSaver } from "@/hooks/useScoreSaver";
 
 const emojis = ["🎮", "🎯", "🚀", "⚡", "🔥", "💎", "🌟", "🎲"];
 const generateCards = () => {
@@ -23,6 +24,7 @@ const MemoryMatch = () => {
   const [time, setTime] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [started, setStarted] = useState(false);
+  const { saveScore, resetSaver } = useScoreSaver();
 
   useEffect(() => {
     if (!started || gameOver) return;
@@ -30,9 +32,19 @@ const MemoryMatch = () => {
     return () => clearInterval(t);
   }, [started, gameOver]);
 
+  const score = gameOver ? Math.max(100, 1000 - moves * 20 - time * 5) : 0;
+
   useEffect(() => {
-    if (cards.every((c) => c.matched)) setGameOver(true);
-  }, [cards]);
+    if (cards.every((c) => c.matched) && started) {
+      setGameOver(true);
+    }
+  }, [cards, started]);
+
+  useEffect(() => {
+    if (gameOver && score > 0) {
+      saveScore({ gameSlug: "memory-match", score, completionTime: time });
+    }
+  }, [gameOver]);
 
   const handleFlip = useCallback(
     (id: number) => {
@@ -73,9 +85,8 @@ const MemoryMatch = () => {
     setTime(0);
     setGameOver(false);
     setStarted(false);
+    resetSaver();
   };
-
-  const score = gameOver ? Math.max(100, 1000 - moves * 20 - time * 5) : 0;
 
   return (
     <div className="min-h-screen pt-16">

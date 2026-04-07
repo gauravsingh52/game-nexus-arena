@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Trophy, Medal, Crown, TrendingUp } from "lucide-react";
+import { Trophy, Medal, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 
 type Tab = "global" | "weekly" | "game";
@@ -13,6 +14,19 @@ interface LeaderboardEntry {
   points: number;
   level: string;
 }
+
+const GAME_SLUGS = [
+  { slug: "memory-match", name: "Memory Match" },
+  { slug: "speed-typer", name: "Speed Typer" },
+  { slug: "quiz-challenge", name: "Quiz Challenge" },
+  { slug: "reaction-time", name: "Reaction Time" },
+  { slug: "math-blitz", name: "Math Blitz" },
+  { slug: "snake", name: "Snake" },
+  { slug: "whack-a-mole", name: "Whack-a-Mole" },
+  { slug: "color-match", name: "Color Match" },
+  { slug: "word-scramble", name: "Word Scramble" },
+  { slug: "aim-trainer", name: "Aim Trainer" },
+];
 
 const rankIcon = (rank: number) => {
   if (rank === 1) return <Crown className="h-5 w-5 text-neon-orange" />;
@@ -25,28 +39,74 @@ const Leaderboard = () => {
   const [tab, setTab] = useState<Tab>("global");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedGame, setSelectedGame] = useState(GAME_SLUGS[0].slug);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, username, total_points, level")
-        .order("total_points", { ascending: false })
-        .limit(20);
+      let result: LeaderboardEntry[] = [];
 
-      if (data) {
-        setEntries(data.map((p, i) => ({
-          rank: i + 1,
-          username: p.username ?? "Anonymous",
-          points: p.total_points ?? 0,
-          level: p.level ?? "Beginner",
-        })));
+      if (tab === "global") {
+        const { data } = await supabase
+          .from("profiles")
+          .select("id, username, total_points, level")
+          .order("total_points", { ascending: false })
+          .limit(20);
+        if (data) {
+          result = data.map((p, i) => ({
+            rank: i + 1,
+            username: p.username ?? "Anonymous",
+            points: p.total_points ?? 0,
+            level: p.level ?? "Beginner",
+          }));
+        }
+      } else if (tab === "weekly") {
+        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { data } = await supabase
+          .from("scores")
+          .select("user_id, score, profiles!inner(username, level)")
+          .gte("created_at", weekAgo)
+          .order("score", { ascending: false })
+          .limit(50);
+        if (data) {
+          const userMap = new Map<string, { username: string; level: string; total: number }>();
+          data.forEach((s: any) => {
+            const existing = userMap.get(s.user_id);
+            const username = s.profiles?.username ?? "Anonymous";
+            const level = s.profiles?.level ?? "Beginner";
+            if (existing) {
+              existing.total += s.score;
+            } else {
+              userMap.set(s.user_id, { username, level, total: s.score });
+            }
+          });
+          result = Array.from(userMap.values())
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 20)
+            .map((u, i) => ({ rank: i + 1, username: u.username, points: u.total, level: u.level }));
+        }
+      } else {
+        const { data } = await supabase
+          .from("scores")
+          .select("user_id, score, profiles!inner(username, level)")
+          .eq("game_slug", selectedGame)
+          .order("score", { ascending: false })
+          .limit(20);
+        if (data) {
+          result = data.map((s: any, i: number) => ({
+            rank: i + 1,
+            username: s.profiles?.username ?? "Anonymous",
+            points: s.score,
+            level: s.profiles?.level ?? "Beginner",
+          }));
+        }
       }
+
+      setEntries(result);
       setLoading(false);
     };
     fetchLeaderboard();
-  }, [tab]);
+  }, [tab, selectedGame]);
 
   return (
     <div className="min-h-screen pt-16">
@@ -59,7 +119,7 @@ const Leaderboard = () => {
           <p className="text-muted-foreground mb-6">Top players ranked by total points</p>
         </motion.div>
 
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap items-center">
           {(["global", "weekly", "game"] as Tab[]).map((t) => (
             <Button
               key={t}
@@ -71,6 +131,18 @@ const Leaderboard = () => {
               {t === "game" ? "By Game" : t}
             </Button>
           ))}
+          {tab === "game" && (
+            <Select value={selectedGame} onValueChange={setSelectedGame}>
+              <SelectTrigger className="w-[180px] h-9 bg-card border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {GAME_SLUGS.map(g => (
+                  <SelectItem key={g.slug} value={g.slug}>{g.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {loading ? (

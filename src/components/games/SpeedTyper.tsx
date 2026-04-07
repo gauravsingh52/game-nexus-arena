@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useScoreSaver } from "@/hooks/useScoreSaver";
 
 const wordList = [
   "react", "game", "score", "level", "speed", "quick", "flash", "power",
@@ -26,6 +27,7 @@ const SpeedTyper = () => {
   const [wordsTyped, setWordsTyped] = useState(0);
   const [streak, setStreak] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { saveScore, resetSaver } = useScoreSaver();
 
   const nextWord = useCallback(() => {
     setCurrent(wordList[Math.floor(Math.random() * wordList.length)]);
@@ -45,6 +47,12 @@ const SpeedTyper = () => {
     return () => clearInterval(t);
   }, [started, gameOver]);
 
+  useEffect(() => {
+    if (gameOver && score > 0) {
+      saveScore({ gameSlug: "speed-typer", score, accuracy: wordsTyped / GAME_TIME });
+    }
+  }, [gameOver]);
+
   const handleInput = (val: string) => {
     if (gameOver) return;
     if (!started) setStarted(true);
@@ -62,6 +70,7 @@ const SpeedTyper = () => {
     setScore(0); setTime(GAME_TIME); setStarted(false);
     setGameOver(false); setWordsTyped(0); setStreak(0);
     nextWord();
+    resetSaver();
     inputRef.current?.focus();
   };
 

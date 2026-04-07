@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowUp, ArrowDown, ArrowRight as ArrowRightIcon, RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useScoreSaver } from "@/hooks/useScoreSaver";
 
 type Pos = { x: number; y: number };
 type Dir = "UP" | "DOWN" | "LEFT" | "RIGHT";
@@ -20,6 +21,7 @@ const SnakeGame = () => {
   const [highScore, setHighScore] = useState(0);
   const dirRef = useRef<Dir>("RIGHT");
   const gameLoopRef = useRef<number>();
+  const { saveScore, resetSaver } = useScoreSaver();
 
   const spawnFood = useCallback((snk: Pos[]): Pos => {
     let pos: Pos;
@@ -28,6 +30,12 @@ const SnakeGame = () => {
     } while (snk.some(s => s.x === pos.x && s.y === pos.y));
     return pos;
   }, []);
+
+  useEffect(() => {
+    if (gameOver && score > 0) {
+      saveScore({ gameSlug: "snake", score: score * 10 });
+    }
+  }, [gameOver]);
 
   const reset = () => {
     const s = [{ x: 10, y: 10 }];
@@ -38,6 +46,7 @@ const SnakeGame = () => {
     setGameOver(false);
     setScore(0);
     setPlaying(true);
+    resetSaver();
   };
 
   const tick = useCallback(() => {
@@ -107,7 +116,6 @@ const SnakeGame = () => {
           className="relative border-2 border-border rounded-xl overflow-hidden bg-card/50 mx-auto"
           style={{ width: GRID * CELL, height: GRID * CELL }}
         >
-          {/* Grid dots */}
           <div className="absolute inset-0 opacity-5" style={{
             backgroundImage: "radial-gradient(circle, hsl(220 90% 56%) 1px, transparent 1px)",
             backgroundSize: `${CELL}px ${CELL}px`,
@@ -133,7 +141,7 @@ const SnakeGame = () => {
           {gameOver && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm gap-4">
               <p className="font-display text-2xl font-bold text-destructive">GAME OVER</p>
-              <p className="font-display text-lg text-neon-green">Score: {score}</p>
+              <p className="font-display text-lg text-neon-green">Score: {score * 10} pts</p>
               <Button onClick={reset} className="gradient-neon glow-blue font-display tracking-wider gap-2">
                 <RotateCcw className="h-4 w-4" /> PLAY AGAIN
               </Button>
@@ -141,7 +149,6 @@ const SnakeGame = () => {
           )}
         </div>
 
-        {/* Mobile controls */}
         <div className="mt-6 flex flex-col items-center gap-2 md:hidden">
           <Button variant="outline" size="icon" onClick={() => { if (dirRef.current !== "DOWN") { dirRef.current = "UP"; setDir("UP"); } }}><ArrowUp className="h-5 w-5" /></Button>
           <div className="flex gap-2">

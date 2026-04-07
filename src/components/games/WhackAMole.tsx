@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useScoreSaver } from "@/hooks/useScoreSaver";
 
 const GAME_TIME = 30;
 const GRID_SIZE = 9;
@@ -16,7 +17,10 @@ const WhackAMole = () => {
   const [gameOver, setGameOver] = useState(false);
   const [highScore, setHighScore] = useState(0);
   const [hitEffect, setHitEffect] = useState<number | null>(null);
+  const [totalWhacks, setTotalWhacks] = useState(0);
+  const [totalClicks, setTotalClicks] = useState(0);
   const moleTimers = useRef<number[]>([]);
+  const { saveScore, resetSaver } = useScoreSaver();
 
   const clearMoleTimers = () => {
     moleTimers.current.forEach(t => clearTimeout(t));
@@ -58,6 +62,13 @@ const WhackAMole = () => {
     return () => clearInterval(timer);
   }, [playing, score]);
 
+  useEffect(() => {
+    if (gameOver && score > 0) {
+      const acc = totalClicks > 0 ? totalWhacks / totalClicks : 0;
+      saveScore({ gameSlug: "whack-a-mole", score, accuracy: acc });
+    }
+  }, [gameOver]);
+
   const whack = (idx: number) => {
     if (!moles[idx] || !playing) return;
     setMoles(prev => { const n = [...prev]; n[idx] = false; return n; });
@@ -66,6 +77,8 @@ const WhackAMole = () => {
     setScore(s => s + 10 + bonus);
     setCombo(newCombo);
     setBestCombo(b => Math.max(b, newCombo));
+    setTotalWhacks(w => w + 1);
+    setTotalClicks(c => c + 1);
     setHitEffect(idx);
     setTimeout(() => setHitEffect(null), 200);
   };
@@ -73,6 +86,7 @@ const WhackAMole = () => {
   const missClick = (idx: number) => {
     if (moles[idx] || !playing) return;
     setCombo(0);
+    setTotalClicks(c => c + 1);
   };
 
   const start = () => {
@@ -83,7 +97,10 @@ const WhackAMole = () => {
     setMoles(Array(GRID_SIZE).fill(false));
     setGameOver(false);
     setPlaying(true);
+    setTotalWhacks(0);
+    setTotalClicks(0);
     clearMoleTimers();
+    resetSaver();
   };
 
   return (

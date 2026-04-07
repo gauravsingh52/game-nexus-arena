@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, RotateCcw, Lightbulb } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useScoreSaver } from "@/hooks/useScoreSaver";
 
 const WORDS = [
   { word: "GALAXY", hint: "Stars and planets" },
@@ -51,6 +52,7 @@ const WordScramble = () => {
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const [highScore, setHighScore] = useState(0);
   const [usedWords, setUsedWords] = useState<Set<string>>(new Set());
+  const { saveScore, resetSaver } = useScoreSaver();
 
   const pickWord = useCallback((used: Set<string>) => {
     const available = WORDS.filter(w => !used.has(w.word));
@@ -75,6 +77,7 @@ const WordScramble = () => {
     setTimeLeft(GAME_TIME);
     setGameOver(false);
     setPlaying(true);
+    resetSaver();
     nextWord(used);
   };
 
@@ -93,6 +96,12 @@ const WordScramble = () => {
     }, 1000);
     return () => clearInterval(t);
   }, [playing, score]);
+
+  useEffect(() => {
+    if (gameOver && score > 0) {
+      saveScore({ gameSlug: "word-scramble", score });
+    }
+  }, [gameOver]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();

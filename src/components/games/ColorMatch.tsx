@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useScoreSaver } from "@/hooks/useScoreSaver";
 
 const COLORS = [
   { name: "RED", hsl: "0 80% 55%" },
@@ -30,6 +31,7 @@ const ColorMatch = () => {
   const [correct, setCorrect] = useState(0);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const [highScore, setHighScore] = useState(0);
+  const { saveScore, resetSaver } = useScoreSaver();
 
   const nextRound = useCallback(() => {
     const wordIdx = Math.floor(Math.random() * COLORS.length);
@@ -52,6 +54,7 @@ const ColorMatch = () => {
     setTimeLeft(GAME_TIME);
     setGameOver(false);
     setPlaying(true);
+    resetSaver();
     nextRound();
   };
 
@@ -70,6 +73,13 @@ const ColorMatch = () => {
     }, 1000);
     return () => clearInterval(t);
   }, [playing, score]);
+
+  useEffect(() => {
+    if (gameOver && score > 0) {
+      const acc = total > 0 ? correct / total : 0;
+      saveScore({ gameSlug: "color-match", score, accuracy: acc });
+    }
+  }, [gameOver]);
 
   const answer = (userSaysMatch: boolean) => {
     if (!playing) return;
