@@ -62,42 +62,60 @@ const Leaderboard = () => {
         }
       } else if (tab === "weekly") {
         const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        const { data } = await supabase
+        const { data: scores } = await supabase
           .from("scores")
-          .select("user_id, score, profiles!inner(username, level)")
-          .gte("created_at", weekAgo)
-          .order("score", { ascending: false })
-          .limit(50);
-        if (data) {
-          const userMap = new Map<string, { username: string; level: string; total: number }>();
-          data.forEach((s: any) => {
-            const existing = userMap.get(s.user_id);
-            const username = s.profiles?.username ?? "Anonymous";
-            const level = s.profiles?.level ?? "Beginner";
-            if (existing) {
-              existing.total += s.score;
-            } else {
-              userMap.set(s.user_id, { username, level, total: s.score });
-            }
+          .select("user_id, score")
+          .gte("created_at", weekAgo);
+
+        if (scores && scores.length > 0) {
+          const userMap = new Map<string, number>();
+          scores.forEach(s => {
+            userMap.set(s.user_id, (userMap.get(s.user_id) || 0) + s.score);
           });
-          result = Array.from(userMap.values())
-            .sort((a, b) => b.total - a.total)
+
+          const userIds = Array.from(userMap.keys());
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, username, level")
+            .in("id", userIds);
+
+          const profileMap = new Map<string, { username: string; level: string }>();
+          profiles?.forEach(p => profileMap.set(p.id, { username: p.username ?? "Anonymous", level: p.level ?? "Beginner" }));
+
+          result = Array.from(userMap.entries())
+            .map(([uid, total]) => ({
+              rank: 0,
+              username: profileMap.get(uid)?.username ?? "Anonymous",
+              points: total,
+              level: profileMap.get(uid)?.level ?? "Beginner",
+            }))
+            .sort((a, b) => b.points - a.points)
             .slice(0, 20)
-            .map((u, i) => ({ rank: i + 1, username: u.username, points: u.total, level: u.level }));
+            .map((e, i) => ({ ...e, rank: i + 1 }));
         }
       } else {
-        const { data } = await supabase
+        const { data: scores } = await supabase
           .from("scores")
-          .select("user_id, score, profiles!inner(username, level)")
+          .select("user_id, score")
           .eq("game_slug", selectedGame)
           .order("score", { ascending: false })
           .limit(20);
-        if (data) {
-          result = data.map((s: any, i: number) => ({
+
+        if (scores && scores.length > 0) {
+          const userIds = [...new Set(scores.map(s => s.user_id))];
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, username, level")
+            .in("id", userIds);
+
+          const profileMap = new Map<string, { username: string; level: string }>();
+          profiles?.forEach(p => profileMap.set(p.id, { username: p.username ?? "Anonymous", level: p.level ?? "Beginner" }));
+
+          result = scores.map((s, i) => ({
             rank: i + 1,
-            username: s.profiles?.username ?? "Anonymous",
+            username: profileMap.get(s.user_id)?.username ?? "Anonymous",
             points: s.score,
-            level: s.profiles?.level ?? "Beginner",
+            level: profileMap.get(s.user_id)?.level ?? "Beginner",
           }));
         }
       }
