@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useScoreSaver } from "@/hooks/useScoreSaver";
 
 const GAME_TIME = 60;
 
@@ -44,6 +45,7 @@ const MathBlitz = () => {
   const [solved, setSolved] = useState(0);
   const [streak, setStreak] = useState(0);
   const [level, setLevel] = useState(1);
+  const { saveScore, resetSaver } = useScoreSaver();
 
   useEffect(() => {
     if (!started || gameOver) return;
@@ -55,6 +57,12 @@ const MathBlitz = () => {
     }, 1000);
     return () => clearInterval(t);
   }, [started, gameOver]);
+
+  useEffect(() => {
+    if (gameOver && score > 0) {
+      saveScore({ gameSlug: "math-blitz", score, accuracy: solved / GAME_TIME });
+    }
+  }, [gameOver]);
 
   const handleInput = useCallback((val: string) => {
     if (gameOver) return;
@@ -79,6 +87,7 @@ const MathBlitz = () => {
     setScore(0); setTime(GAME_TIME); setStarted(false);
     setGameOver(false); setSolved(0); setStreak(0); setLevel(1);
     setProblem(generateProblem(1)); setInput("");
+    resetSaver();
   };
 
   return (

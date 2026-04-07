@@ -1,10 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, RotateCcw, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useScoreSaver } from "@/hooks/useScoreSaver";
 
 interface Question {
   question: string;
@@ -31,8 +32,15 @@ const QuizChallenge = () => {
   const [answered, setAnswered] = useState<number | null>(null);
   const [gameOver, setGameOver] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
+  const { saveScore, resetSaver } = useScoreSaver();
 
   const q = questions[current];
+
+  useEffect(() => {
+    if (gameOver && score > 0) {
+      saveScore({ gameSlug: "quiz-challenge", score, accuracy: correctCount / questions.length });
+    }
+  }, [gameOver]);
 
   const handleAnswer = useCallback((idx: number) => {
     if (answered !== null) return;
@@ -54,6 +62,7 @@ const QuizChallenge = () => {
   const reset = () => {
     setCurrent(0); setScore(0); setAnswered(null);
     setGameOver(false); setCorrectCount(0);
+    resetSaver();
   };
 
   return (

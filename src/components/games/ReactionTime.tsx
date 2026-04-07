@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowLeft, RotateCcw, Star, Crosshair } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useScoreSaver } from "@/hooks/useScoreSaver";
 
 const TOTAL_ROUNDS = 10;
 
@@ -14,6 +15,11 @@ const ReactionTime = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const startRef = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const { saveScore, resetSaver } = useScoreSaver();
+
+  const avg = times.length ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
+  const best = times.length ? Math.min(...times) : 0;
+  const score = times.length ? Math.max(0, Math.round(times.reduce((total, t) => total + Math.max(0, 500 - t), 0))) : 0;
 
   const startRound = useCallback(() => {
     setPhase("ready");
@@ -49,14 +55,17 @@ const ReactionTime = () => {
     return () => clearTimeout(timeoutRef.current);
   }, []);
 
+  useEffect(() => {
+    if (phase === "done" && score > 0) {
+      saveScore({ gameSlug: "reaction-time", score, completionTime: avg });
+    }
+  }, [phase]);
+
   const reset = () => {
     clearTimeout(timeoutRef.current);
     setPhase("waiting"); setTimes([]); setRound(0); setCurrentTime(0);
+    resetSaver();
   };
-
-  const avg = times.length ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
-  const best = times.length ? Math.min(...times) : 0;
-  const score = times.length ? Math.max(0, Math.round(times.reduce((total, t) => total + Math.max(0, 500 - t), 0))) : 0;
 
   const bgColor = phase === "ready" ? "bg-destructive/20" : phase === "go" ? "bg-neon-green/20" : "bg-card";
 
