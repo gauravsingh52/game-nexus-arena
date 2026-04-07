@@ -1,84 +1,73 @@
 
 
-## Plan: Dynamic Landing Page Redesign + 5 New Games (10 Total)
+## Plan: Wire Up Score Saving, Fix Bugs, and Complete the System
 
-### Current State
-- 5 working games: Memory Match, Speed Typer, Quiz Challenge, Reaction Time, Math Blitz
-- Landing page is functional but static with basic card layouts
-- Dark gaming theme with neon accents already in place
+### Bugs Identified
 
-### Part 1: Landing Page Overhaul
+1. **Missing database trigger**: The `handle_new_user()` function exists but no trigger is attached to `auth.users`, so profiles are NOT auto-created on signup. The existing profile was likely inserted manually.
+2. **No score saving**: None of the 10 games save scores to Supabase. They all calculate scores locally but never persist them.
+3. **No total_points update**: Even if scores were saved, nothing updates `profiles.total_points`.
+4. **Dashboard join query bug**: The query `user_achievements.select("achievement_id, achievements(name, icon)")` uses a foreign key join on `achievements`, which exists in the schema -- this should work, but needs the relationship to be correct.
+5. **Leaderboard ignores tab selection**: The `tab` state changes but `fetchLeaderboard` always runs the same query regardless of "global", "weekly", or "game" tab.
+6. **Achievement criteria outdated**: Achievements reference only 5 games (`unique_games: 5`) but there are now 10 games.
 
-Completely redesign `src/pages/Index.tsx` with heavy animation and gaming graphics:
+### Phase 1: Database Migration
 
-- **Animated particle/floating elements background** -- CSS-based floating neon orbs, grid lines, and scanline effects throughout the page
-- **Hero section** -- Massive glitching text effect on "NEXUS ARENA" using CSS keyframes, animated controller/gamepad SVG graphic, pulsing neon border, typing animation on tagline
-- **Animated stats counter** -- Numbers that count up on scroll using `useIntersectionObserver` + `useState` animation (e.g., "10+ Games", "Live Rankings", "24/7")
-- **Game carousel/showcase** -- Horizontal scrollable game cards with 3D tilt hover effect (CSS perspective transform), glowing card borders that pulse, animated icons
-- **How it works** -- Animated timeline with connecting neon lines, step icons that animate in sequence
-- **Features grid** -- Cards with animated icon backgrounds (rotating/pulsing), glassmorphism effect
-- **Testimonials/social proof** -- Animated avatar stack, marquee-style scrolling player names
-- **Final CTA** -- Large pulsing button with ring animation, background energy wave effect
-- **Footer** -- Neon divider line animation
+Create a migration that:
+- Attaches the trigger `on_auth_user_created` to `auth.users` AFTER INSERT, calling `handle_new_user()`
+- Creates a function `update_user_points()` that recalculates `profiles.total_points` as the sum of all scores for that user, triggered AFTER INSERT on `scores`
+- Updates the "Game Master" achievement from `criteria_value: 5` to `criteria_value: 10`
 
-New CSS utilities in `src/index.css`:
-- `@keyframes glitch` -- text glitch effect
-- `@keyframes scanline` -- CRT scanline overlay
-- `@keyframes float-random` -- varied floating for particles
-- `@keyframes count-up` -- number counter
-- `@keyframes neon-pulse` -- border glow pulsing
+### Phase 2: Create a Shared Score-Saving Hook
 
-### Part 2: 5 New Games
+Create `src/hooks/useScoreSaver.ts`:
+- Accepts `gameSlug`, `score`, `completionTime?`, `accuracy?`
+- Inserts into `scores` table with `user_id` from auth
+- Shows a toast on success/failure
+- Returns `{ saveScore, saving }` state
 
-Add 5 new fully functional games to reach 10 total:
+### Phase 3: Wire Score Saving into All 10 Games
 
-**6. Snake Game** (`src/components/games/SnakeGame.tsx`)
-- Classic snake on a grid using canvas or div-based rendering
-- Arrow key controls, growing snake, random food spawning
-- Score based on length, increasing speed per level
-- Category: arcade, Difficulty: medium
+Modify each game component to:
+- Import `useAuth` and `useScoreSaver`
+- Call `saveScore()` when the game ends (on game-over state)
+- Use `useEffect` triggered by `gameOver` state to save once
+- Show a "Score saved!" indicator
 
-**7. Whack-a-Mole** (`src/components/games/WhackAMole.tsx`)
-- 3x3 grid of holes, moles pop up randomly with decreasing intervals
-- Click/tap to whack, combo streaks for bonus points
-- 30-second rounds, score tracking
-- Category: action, Difficulty: easy
+Games to update:
+- `MemoryMatch` -- save on `gameOver` with `completion_time: time`
+- `SpeedTyper` -- save on `gameOver` with `accuracy: wordsTyped/GAME_TIME`
+- `QuizChallenge` -- save on `gameOver` with `accuracy: correctCount/questions.length`
+- `ReactionTime` -- save on phase `"done"` with `completion_time: avg`
+- `MathBlitz` -- save on `gameOver` with `accuracy: solved`
+- `SnakeGame` -- save on game over
+- `WhackAMole` -- save on game over with `accuracy`
+- `ColorMatch` -- save on game over with `accuracy`
+- `WordScramble` -- save on game over
+- `AimTrainer` -- save on `gameOver` with `accuracy` and `completion_time: avgTime`
 
-**8. Color Match** (`src/components/games/ColorMatch.tsx`)
-- Word shows a color name but rendered in a different color
-- Player must click whether the TEXT matches the COLOR (Stroop test)
-- Timed rounds, accuracy tracking
-- Category: puzzle, Difficulty: hard
+### Phase 4: Fix Leaderboard
 
-**9. Word Scramble** (`src/components/games/WordScramble.tsx`)
-- Scrambled letters, player rearranges to form the correct word
-- Hint system, timed scoring, difficulty progression
-- Category: puzzle, Difficulty: medium
+Update `Leaderboard.tsx`:
+- **Global tab**: Query `profiles` ordered by `total_points` (current behavior)
+- **Weekly tab**: Query `scores` from last 7 days, group by `user_id`, sum scores, join with profiles
+- **Game tab**: Add a game selector dropdown, query `scores` filtered by `game_slug`, show top scores
 
-**10. Aim Trainer** (`src/components/games/AimTrainer.tsx`)
-- Targets appear at random positions in a play area
-- Click targets as fast as possible, targets shrink over time
-- Tracks accuracy (hits vs misses), average time per target
-- Category: action, Difficulty: hard
+### Phase 5: Fix Dashboard Query
+
+- Change the `user_achievements` join to handle the case where no achievements exist gracefully
+- Ensure the chart and recent games sections handle empty data without errors
 
 ### Files to Create
-- `src/components/games/SnakeGame.tsx`
-- `src/components/games/WhackAMole.tsx`
-- `src/components/games/ColorMatch.tsx`
-- `src/components/games/WordScramble.tsx`
-- `src/components/games/AimTrainer.tsx`
+- `src/hooks/useScoreSaver.ts`
 
 ### Files to Modify
-- `src/pages/Index.tsx` -- Complete redesign with animations
-- `src/index.css` -- New keyframe animations and utility classes
-- `src/data/games.ts` -- Add 5 new game entries
-- `src/App.tsx` -- Add 5 new routes
-- `tailwind.config.ts` -- Add new animation keyframes (glitch, scanline, neon-pulse)
+- All 10 game components (add score saving)
+- `src/pages/Leaderboard.tsx` (fix tabs)
+- `src/pages/Dashboard.tsx` (minor query fixes)
 
-### Technical Notes
-- All animations use CSS keyframes + framer-motion (already installed)
-- No new dependencies needed
-- Each game follows the same pattern as existing games: standalone component with state management, score tracking, reset, and game-over screen
-- Snake game uses `useEffect` + `setInterval` for game loop with keyboard event listeners
-- All games use the existing dark theme and neon color palette
+### Migration SQL
+- Attach `handle_new_user` trigger to `auth.users`
+- Create `update_user_points` trigger function + trigger on `scores`
+- Update achievement criteria value
 
