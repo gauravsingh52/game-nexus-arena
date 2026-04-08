@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { User, Trophy, Gamepad2, Calendar, Edit2 } from "lucide-react";
+import { User, Trophy, Gamepad2, Calendar, Edit2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Profile {
   username: string;
@@ -21,12 +24,16 @@ const ProfilePage = () => {
   const [gamesPlayed, setGamesPlayed] = useState(0);
   const [badges, setBadges] = useState<{ name: string; icon: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [editUsername, setEditUsername] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
       const [profileRes, scoresRes, achRes] = await Promise.all([
-        supabase.from("profiles").select("username, bio, level, total_points, created_at").eq("id", user.id).single(),
+        supabase.from("profiles").select("username, bio, level, total_points, created_at").eq("id", user.id).maybeSingle(),
         supabase.from("scores").select("id").eq("user_id", user.id),
         supabase.from("user_achievements").select("achievements(name, icon)").eq("user_id", user.id),
       ]);
@@ -39,6 +46,32 @@ const ProfilePage = () => {
     };
     fetchData();
   }, [user]);
+
+  const startEdit = () => {
+    setEditUsername(profile?.username || "");
+    setEditBio(profile?.bio || "");
+    setEditing(true);
+  };
+
+  const cancelEdit = () => setEditing(false);
+
+  const saveProfile = async () => {
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase.from("profiles").update({
+      username: editUsername.trim() || "Player",
+      bio: editBio.trim(),
+    }).eq("id", user.id);
+    setSaving(false);
+
+    if (error) {
+      toast.error("Failed to save profile");
+    } else {
+      setProfile(prev => prev ? { ...prev, username: editUsername.trim() || "Player", bio: editBio.trim() } : prev);
+      setEditing(false);
+      toast.success("Profile updated!");
+    }
+  };
 
   if (loading) {
     return (
@@ -62,16 +95,42 @@ const ProfilePage = () => {
                   <User className="h-10 w-10 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h1 className="font-display text-2xl font-bold tracking-wider">{profile?.username ?? "PLAYER"}</h1>
-                    <Badge className="gradient-neon text-xs">{profile?.level ?? "Beginner"}</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-3">{profile?.bio || "No bio yet."}</p>
-                  <div className="flex gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1"><Trophy className="h-3.5 w-3.5 text-neon-orange" /> {profile?.total_points ?? 0} pts</span>
-                    <span className="flex items-center gap-1"><Gamepad2 className="h-3.5 w-3.5 text-neon-blue" /> {gamesPlayed} games</span>
-                    <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-neon-green" /> Joined {joinYear}</span>
-                  </div>
+                  {editing ? (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Username</label>
+                        <Input value={editUsername} onChange={e => setEditUsername(e.target.value)} className="font-display" maxLength={30} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Bio</label>
+                        <Textarea value={editBio} onChange={e => setEditBio(e.target.value)} className="resize-none" rows={2} maxLength={160} />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={saveProfile} disabled={saving} size="sm" className="gradient-neon font-display gap-1">
+                          <Save className="h-3.5 w-3.5" /> {saving ? "Saving..." : "Save"}
+                        </Button>
+                        <Button onClick={cancelEdit} variant="outline" size="sm" className="font-display gap-1">
+                          <X className="h-3.5 w-3.5" /> Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h1 className="font-display text-2xl font-bold tracking-wider">{profile?.username ?? "PLAYER"}</h1>
+                        <Badge className="gradient-neon text-xs">{profile?.level ?? "Beginner"}</Badge>
+                        <Button onClick={startEdit} variant="ghost" size="icon" className="h-7 w-7 ml-1">
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">{profile?.bio || "No bio yet. Click edit to add one!"}</p>
+                      <div className="flex gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1"><Trophy className="h-3.5 w-3.5 text-neon-orange" /> {profile?.total_points ?? 0} pts</span>
+                        <span className="flex items-center gap-1"><Gamepad2 className="h-3.5 w-3.5 text-neon-blue" /> {gamesPlayed} games</span>
+                        <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-neon-green" /> Joined {joinYear}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
