@@ -21,11 +21,16 @@ const GAME_SLUGS = [
   { slug: "quiz-challenge", name: "Quiz Challenge" },
   { slug: "reaction-time", name: "Reaction Time" },
   { slug: "math-blitz", name: "Math Blitz" },
-  { slug: "snake", name: "Snake" },
+  { slug: "snake-game", name: "Snake" },
   { slug: "whack-a-mole", name: "Whack-a-Mole" },
   { slug: "color-match", name: "Color Match" },
   { slug: "word-scramble", name: "Word Scramble" },
   { slug: "aim-trainer", name: "Aim Trainer" },
+  { slug: "simon-says", name: "Simon Says" },
+  { slug: "2048", name: "2048" },
+  { slug: "tic-tac-toe", name: "Tic Tac Toe" },
+  { slug: "hangman", name: "Hangman" },
+  { slug: "number-guess", name: "Number Guess" },
 ];
 
 const rankIcon = (rank: number) => {

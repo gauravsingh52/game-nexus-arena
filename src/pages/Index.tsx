@@ -212,7 +212,7 @@ const Index = () => {
             <h2 className="font-display text-4xl md:text-5xl font-black tracking-wider mb-3">
               THE <GlitchText className="text-primary neon-text-blue">GAMES</GlitchText>
             </h2>
-            <p className="text-muted-foreground font-heading text-lg tracking-wide">10 mind-bending challenges await</p>
+            <p className="text-muted-foreground font-heading text-lg tracking-wide">15 mind-bending challenges await</p>
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -332,7 +332,7 @@ const Index = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
             {[
-              { icon: Gamepad2, title: "10+ Games", desc: "Puzzle, arcade, strategy & action categories", color: "text-neon-blue", glow: "group-hover:shadow-[0_0_40px_hsl(220_90%_56%/0.2)]" },
+              { icon: Gamepad2, title: "15+ Games", desc: "Puzzle, arcade, strategy & action categories", color: "text-neon-blue", glow: "group-hover:shadow-[0_0_40px_hsl(220_90%_56%/0.2)]" },
               { icon: Trophy, title: "Live Rankings", desc: "Real-time global leaderboards updated instantly", color: "text-neon-purple", glow: "group-hover:shadow-[0_0_40px_hsl(270_80%_60%/0.2)]" },
               { icon: Zap, title: "Earn Rewards", desc: "Points, badges, achievements & level-ups", color: "text-neon-green", glow: "group-hover:shadow-[0_0_40px_hsl(160_80%_45%/0.2)]" },
               { icon: Users, title: "Social Play", desc: "Add friends, compare scores & compete together", color: "text-neon-pink", glow: "group-hover:shadow-[0_0_40px_hsl(330_85%_60%/0.2)]" },

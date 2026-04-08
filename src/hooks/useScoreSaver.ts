@@ -23,7 +23,7 @@ export const useScoreSaver = () => {
       .from("profiles")
       .select("id")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!profile) {
       await supabase.from("profiles").insert({

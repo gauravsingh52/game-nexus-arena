@@ -5,7 +5,8 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :root,
+  [data-theme="neon-dark"] {
     --background: 240 15% 4%;
     --foreground: 220 20% 92%;
 
@@ -50,6 +51,100 @@
     --sidebar-accent-foreground: 220 20% 92%;
     --sidebar-border: 240 10% 16%;
     --sidebar-ring: 220 90% 56%;
+  }
+
+  [data-theme="cyber-purple"] {
+    --background: 270 20% 4%;
+    --foreground: 270 15% 92%;
+
+    --card: 270 15% 9%;
+    --card-foreground: 270 15% 92%;
+
+    --popover: 270 15% 9%;
+    --popover-foreground: 270 15% 92%;
+
+    --primary: 280 85% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 320 80% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 270 12% 15%;
+    --muted-foreground: 270 10% 55%;
+
+    --accent: 200 80% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 270 12% 18%;
+    --input: 270 12% 18%;
+    --ring: 280 85% 60%;
+
+    --radius: 0.75rem;
+
+    --neon-blue: 200 80% 50%;
+    --neon-purple: 280 85% 60%;
+    --neon-green: 160 80% 45%;
+    --neon-pink: 320 80% 55%;
+    --neon-orange: 25 95% 55%;
+
+    --sidebar-background: 270 15% 6%;
+    --sidebar-foreground: 270 15% 92%;
+    --sidebar-primary: 280 85% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 270 12% 15%;
+    --sidebar-accent-foreground: 270 15% 92%;
+    --sidebar-border: 270 12% 18%;
+    --sidebar-ring: 280 85% 60%;
+  }
+
+  [data-theme="ocean-blue"] {
+    --background: 210 25% 4%;
+    --foreground: 200 15% 92%;
+
+    --card: 210 20% 8%;
+    --card-foreground: 200 15% 92%;
+
+    --popover: 210 20% 8%;
+    --popover-foreground: 200 15% 92%;
+
+    --primary: 190 90% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 75% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 12% 14%;
+    --muted-foreground: 200 10% 55%;
+
+    --accent: 160 70% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 12% 16%;
+    --input: 210 12% 16%;
+    --ring: 190 90% 45%;
+
+    --radius: 0.75rem;
+
+    --neon-blue: 190 90% 45%;
+    --neon-purple: 220 75% 55%;
+    --neon-green: 160 70% 45%;
+    --neon-pink: 340 75% 55%;
+    --neon-orange: 30 90% 55%;
+
+    --sidebar-background: 210 20% 6%;
+    --sidebar-foreground: 200 15% 92%;
+    --sidebar-primary: 190 90% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 12% 14%;
+    --sidebar-accent-foreground: 200 15% 92%;
+    --sidebar-border: 210 12% 16%;
+    --sidebar-ring: 190 90% 45%;
   }
 }
 
