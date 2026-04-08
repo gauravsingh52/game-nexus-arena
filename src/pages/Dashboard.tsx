@@ -37,7 +37,7 @@ const Dashboard = () => {
     if (!user) return;
     const fetchData = async () => {
       const [profileRes, scoresRes, userAchRes, achRes] = await Promise.all([
-        supabase.from("profiles").select("username, level, total_points").eq("id", user.id).single(),
+        supabase.from("profiles").select("username, level, total_points").eq("id", user.id).maybeSingle(),
         supabase.from("scores").select("game_slug, score, completion_time, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
         supabase.from("user_achievements").select("achievement_id, achievements(name, icon)").eq("user_id", user.id),
         supabase.from("achievements").select("name, icon"),

@@ -23,7 +23,7 @@ const ensureProfile = async (user: User) => {
     .from("profiles")
     .select("id")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   if (!data) {
     await supabase.from("profiles").insert({
