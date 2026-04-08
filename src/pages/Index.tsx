@@ -212,7 +212,7 @@ const Index = () => {
             <h2 className="font-display text-4xl md:text-5xl font-black tracking-wider mb-3">
               THE <GlitchText className="text-primary neon-text-blue">GAMES</GlitchText>
             </h2>
-            <p className="text-muted-foreground font-heading text-lg tracking-wide">10 mind-bending challenges await</p>
+            <p className="text-muted-foreground font-heading text-lg tracking-wide">15 mind-bending challenges await</p>
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

@@ -1,14 +1,22 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Gamepad2, Trophy, LayoutDashboard, User, Menu, X, Bell, LogOut } from "lucide-react";
+import { Gamepad2, Trophy, LayoutDashboard, User, Menu, X, Bell, LogOut, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
+
+const THEME_LABELS: Record<string, string> = {
+  "neon-dark": "🔵 Neon",
+  "cyber-purple": "🟣 Cyber",
+  "ocean-blue": "🌊 Ocean",
+};
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { theme, cycleTheme } = useTheme();
 
   const navLinks = [
     { to: "/games", label: "Games", icon: Gamepad2, requiresAuth: false },
@@ -49,6 +57,16 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={cycleTheme}
+            className="text-muted-foreground hover:text-foreground font-heading gap-1 text-xs"
+          >
+            <Palette className="h-4 w-4" />
+            {THEME_LABELS[theme]}
+          </Button>
+
           {user ? (
             <>
               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
@@ -92,6 +110,10 @@ const Navbar = () => {
                   </Button>
                 </Link>
               ))}
+              <Button onClick={cycleTheme} variant="ghost" className="w-full justify-start gap-2 font-heading">
+                <Palette className="h-4 w-4" />
+                Theme: {THEME_LABELS[theme]}
+              </Button>
               {user ? (
                 <Button onClick={() => { signOut(); setMobileOpen(false); }} variant="outline" className="w-full font-heading mt-2 gap-1">
                   <LogOut className="h-4 w-4" /> Sign Out
