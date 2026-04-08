@@ -1,73 +1,88 @@
 
 
-## Plan: Wire Up Score Saving, Fix Bugs, and Complete the System
+## Plan: Fix Leaderboard, Add Profile Editing, Polish Landing Page, More Games, Theme System
 
-### Bugs Identified
+### 1. Fix Leaderboard (Root Cause)
 
-1. **Missing database trigger**: The `handle_new_user()` function exists but no trigger is attached to `auth.users`, so profiles are NOT auto-created on signup. The existing profile was likely inserted manually.
-2. **No score saving**: None of the 10 games save scores to Supabase. They all calculate scores locally but never persist them.
-3. **No total_points update**: Even if scores were saved, nothing updates `profiles.total_points`.
-4. **Dashboard join query bug**: The query `user_achievements.select("achievement_id, achievements(name, icon)")` uses a foreign key join on `achievements`, which exists in the schema -- this should work, but needs the relationship to be correct.
-5. **Leaderboard ignores tab selection**: The `tab` state changes but `fetchLeaderboard` always runs the same query regardless of "global", "weekly", or "game" tab.
-6. **Achievement criteria outdated**: Achievements reference only 5 games (`unique_games: 5`) but there are now 10 games.
+The leaderboard code in `Leaderboard.tsx` looks structurally correct but has these issues:
+- Uses `.single()` in some profile queries which throws errors if no profile exists (use `.maybeSingle()`)
+- The `useScoreSaver` and `useAuth` also use `.single()` which can fail silently
+- The leaderboard "By Game" filter uses slug `"snake"` which matches saved data, but the game selector needs to stay in sync
 
-### Phase 1: Database Migration
+**Fix**: Replace all `.single()` calls with `.maybeSingle()` across `useAuth.tsx`, `useScoreSaver.ts`, `Dashboard.tsx`, and `Profile.tsx`. Ensure leaderboard queries handle empty results gracefully.
 
-Create a migration that:
-- Attaches the trigger `on_auth_user_created` to `auth.users` AFTER INSERT, calling `handle_new_user()`
-- Creates a function `update_user_points()` that recalculates `profiles.total_points` as the sum of all scores for that user, triggered AFTER INSERT on `scores`
-- Updates the "Game Master" achievement from `criteria_value: 5` to `criteria_value: 10`
+### 2. Add Profile Editing
 
-### Phase 2: Create a Shared Score-Saving Hook
+Add inline editing to `Profile.tsx`:
+- Edit button toggles edit mode with input fields for username and bio
+- Save button calls `supabase.from("profiles").update({...}).eq("id", user.id)`
+- Cancel button reverts changes
+- Toast feedback on save success/failure
 
-Create `src/hooks/useScoreSaver.ts`:
-- Accepts `gameSlug`, `score`, `completionTime?`, `accuracy?`
-- Inserts into `scores` table with `user_id` from auth
-- Shows a toast on success/failure
-- Returns `{ saveScore, saving }` state
+### 3. Fix Landing Page Polish
 
-### Phase 3: Wire Score Saving into All 10 Games
+The landing page is already well-built. Minor fixes:
+- Ensure the "BROWSE GAMES" button works without auth (it links to `/games` which is public -- OK)
+- Fix any broken CSS animations (verify `animate-marquee` works)
+- Clean up the footer links for logged-in users
 
-Modify each game component to:
-- Import `useAuth` and `useScoreSaver`
-- Call `saveScore()` when the game ends (on game-over state)
-- Use `useEffect` triggered by `gameOver` state to save once
-- Show a "Score saved!" indicator
+### 4. Add 5 More Games (Total: 15)
 
-Games to update:
-- `MemoryMatch` -- save on `gameOver` with `completion_time: time`
-- `SpeedTyper` -- save on `gameOver` with `accuracy: wordsTyped/GAME_TIME`
-- `QuizChallenge` -- save on `gameOver` with `accuracy: correctCount/questions.length`
-- `ReactionTime` -- save on phase `"done"` with `completion_time: avg`
-- `MathBlitz` -- save on `gameOver` with `accuracy: solved`
-- `SnakeGame` -- save on game over
-- `WhackAMole` -- save on game over with `accuracy`
-- `ColorMatch` -- save on game over with `accuracy`
-- `WordScramble` -- save on game over
-- `AimTrainer` -- save on `gameOver` with `accuracy` and `completion_time: avgTime`
+Create 5 new games:
+- **Simon Says** (`SimonSays.tsx`) -- Memory sequence game with colors/sounds, increasing pattern length
+- **2048** (`Game2048.tsx`) -- Slide tiles on a 4x4 grid to combine matching numbers
+- **Tic Tac Toe** (`TicTacToe.tsx`) -- Play against AI with minimax algorithm
+- **Hangman** (`Hangman.tsx`) -- Guess the word letter by letter before running out of attempts
+- **Number Guess** (`NumberGuess.tsx`) -- Binary search style guessing game with hot/cold hints
 
-### Phase 4: Fix Leaderboard
+Each game: standalone component, score saving via `useScoreSaver`, game-over screen with restart.
 
-Update `Leaderboard.tsx`:
-- **Global tab**: Query `profiles` ordered by `total_points` (current behavior)
-- **Weekly tab**: Query `scores` from last 7 days, group by `user_id`, sum scores, join with profiles
-- **Game tab**: Add a game selector dropdown, query `scores` filtered by `game_slug`, show top scores
+### 5. Theme System
 
-### Phase 5: Fix Dashboard Query
+Add a theme switcher supporting 3 themes:
+- **Neon Dark** (current default)
+- **Cyber Purple** -- Purple-dominant palette
+- **Ocean Blue** -- Blue/teal palette
 
-- Change the `user_achievements` join to handle the case where no achievements exist gracefully
-- Ensure the chart and recent games sections handle empty data without errors
+Implementation:
+- Create `src/hooks/useTheme.tsx` context provider with `localStorage` persistence
+- Define CSS variable overrides for each theme in `index.css`
+- Add theme toggle button to Navbar (icon cycles through themes)
+- Apply theme class to `<html>` element
+
+### Dashboard Enhancement
+
+Make the dashboard more visually appealing:
+- Add animated gradient header with user avatar area
+- Redesign stat cards with animated borders and hover effects
+- Add a "Quick Play" section with game shortcuts
+- Improve the chart styling with gradient fills
+- Add a streak/activity heatmap-style indicator
 
 ### Files to Create
-- `src/hooks/useScoreSaver.ts`
+- `src/components/games/SimonSays.tsx`
+- `src/components/games/Game2048.tsx`
+- `src/components/games/TicTacToe.tsx`
+- `src/components/games/Hangman.tsx`
+- `src/components/games/NumberGuess.tsx`
+- `src/hooks/useTheme.tsx`
 
 ### Files to Modify
-- All 10 game components (add score saving)
-- `src/pages/Leaderboard.tsx` (fix tabs)
-- `src/pages/Dashboard.tsx` (minor query fixes)
+- `src/hooks/useAuth.tsx` -- `.single()` to `.maybeSingle()`
+- `src/hooks/useScoreSaver.ts` -- `.single()` to `.maybeSingle()`
+- `src/pages/Profile.tsx` -- Add edit mode, `.single()` to `.maybeSingle()`
+- `src/pages/Dashboard.tsx` -- Visual redesign, `.single()` to `.maybeSingle()`, quick play section
+- `src/pages/Leaderboard.tsx` -- Fix edge cases in data fetching
+- `src/pages/Index.tsx` -- Minor polish
+- `src/data/games.ts` -- Add 5 new game entries
+- `src/App.tsx` -- Add 5 new routes, wrap with ThemeProvider
+- `src/components/layout/Navbar.tsx` -- Add theme toggle button
+- `src/index.css` -- Add theme CSS variable sets
+- `tailwind.config.ts` -- No changes needed (themes use CSS vars)
 
-### Migration SQL
-- Attach `handle_new_user` trigger to `auth.users`
-- Create `update_user_points` trigger function + trigger on `scores`
-- Update achievement criteria value
+### Technical Notes
+- No new npm dependencies needed
+- All themes use CSS custom properties, so switching is instant with zero re-renders
+- Profile editing uses optimistic UI update with rollback on error
+- New games follow the same pattern as existing games (useScoreSaver hook, game-over state, reset)
 
