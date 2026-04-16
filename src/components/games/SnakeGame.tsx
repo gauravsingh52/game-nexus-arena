@@ -33,7 +33,7 @@ const SnakeGame = () => {
 
   useEffect(() => {
     if (gameOver && score > 0) {
-      saveScore({ gameSlug: "snake", score: score * 10 });
+      saveScore({ gameSlug: "snake-game", score: score * 10 });
     }
   }, [gameOver]);
 

@@ -14,6 +14,7 @@ import Games from "./pages/Games";
 import Dashboard from "./pages/Dashboard";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
+import Friends from "./pages/Friends";
 import NotFound from "./pages/NotFound";
 import MemoryMatch from "./components/games/MemoryMatch";
 import SpeedTyper from "./components/games/SpeedTyper";
@@ -47,24 +48,26 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/games" element={<Games />} />
-              <Route path="/games/memory-match" element={<ProtectedRoute><MemoryMatch /></ProtectedRoute>} />
-              <Route path="/games/speed-typer" element={<ProtectedRoute><SpeedTyper /></ProtectedRoute>} />
-              <Route path="/games/quiz-challenge" element={<ProtectedRoute><QuizChallenge /></ProtectedRoute>} />
-              <Route path="/games/reaction-time" element={<ProtectedRoute><ReactionTime /></ProtectedRoute>} />
-              <Route path="/games/math-blitz" element={<ProtectedRoute><MathBlitz /></ProtectedRoute>} />
-              <Route path="/games/snake-game" element={<ProtectedRoute><SnakeGame /></ProtectedRoute>} />
-              <Route path="/games/whack-a-mole" element={<ProtectedRoute><WhackAMole /></ProtectedRoute>} />
-              <Route path="/games/color-match" element={<ProtectedRoute><ColorMatch /></ProtectedRoute>} />
-              <Route path="/games/word-scramble" element={<ProtectedRoute><WordScramble /></ProtectedRoute>} />
-              <Route path="/games/aim-trainer" element={<ProtectedRoute><AimTrainer /></ProtectedRoute>} />
-              <Route path="/games/simon-says" element={<ProtectedRoute><SimonSays /></ProtectedRoute>} />
-              <Route path="/games/2048" element={<ProtectedRoute><Game2048 /></ProtectedRoute>} />
-              <Route path="/games/tic-tac-toe" element={<ProtectedRoute><TicTacToe /></ProtectedRoute>} />
-              <Route path="/games/hangman" element={<ProtectedRoute><Hangman /></ProtectedRoute>} />
-              <Route path="/games/number-guess" element={<ProtectedRoute><NumberGuess /></ProtectedRoute>} />
+              {/* Games are playable without login; scores save only if signed in */}
+              <Route path="/games/memory-match" element={<MemoryMatch />} />
+              <Route path="/games/speed-typer" element={<SpeedTyper />} />
+              <Route path="/games/quiz-challenge" element={<QuizChallenge />} />
+              <Route path="/games/reaction-time" element={<ReactionTime />} />
+              <Route path="/games/math-blitz" element={<MathBlitz />} />
+              <Route path="/games/snake-game" element={<SnakeGame />} />
+              <Route path="/games/whack-a-mole" element={<WhackAMole />} />
+              <Route path="/games/color-match" element={<ColorMatch />} />
+              <Route path="/games/word-scramble" element={<WordScramble />} />
+              <Route path="/games/aim-trainer" element={<AimTrainer />} />
+              <Route path="/games/simon-says" element={<SimonSays />} />
+              <Route path="/games/2048" element={<Game2048 />} />
+              <Route path="/games/tic-tac-toe" element={<TicTacToe />} />
+              <Route path="/games/hangman" element={<Hangman />} />
+              <Route path="/games/number-guess" element={<NumberGuess />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

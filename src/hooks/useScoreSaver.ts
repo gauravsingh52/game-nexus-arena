@@ -15,10 +15,16 @@ export const useScoreSaver = () => {
   const savedRef = useRef(false);
 
   const saveScore = useCallback(async ({ gameSlug, score, completionTime, accuracy }: SaveScoreParams) => {
-    if (!user || savedRef.current || score <= 0) return;
+    if (savedRef.current || score <= 0) return;
+
+    if (!user) {
+      toast.info("Sign in to save your score!", { duration: 4000 });
+      return;
+    }
+
     savedRef.current = true;
 
-    // Ensure profile exists (handles case where trigger didn't fire)
+    // Ensure profile exists
     const { data: profile } = await supabase
       .from("profiles")
       .select("id")
