@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Trophy, Gamepad2, Target, Flame, TrendingUp, Award, Zap, Play } from "lucide-react";
+import { Trophy, Gamepad2, Target, Flame, TrendingUp, Award, Zap, Play, Calendar, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, AreaChart } from "recharts";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { gamesData } from "@/data/games";
+import { getLevelInfo, getNextLevel } from "@/lib/levels";
 
 interface Profile {
   username: string;
@@ -22,16 +25,11 @@ interface Score {
   created_at: string;
 }
 
-interface Achievement {
-  name: string;
-  icon: string;
-}
-
 const Dashboard = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [scores, setScores] = useState<Score[]>([]);
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [achievements, setAchievements] = useState<{ name: string; icon: string }[]>([]);
   const [allAchievements, setAllAchievements] = useState<{ name: string; icon: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,11 +45,7 @@ const Dashboard = () => {
       if (profileRes.data) setProfile(profileRes.data);
       if (scoresRes.data) setScores(scoresRes.data);
       if (userAchRes.data) {
-        const unlocked = userAchRes.data.map((ua: any) => ({
-          name: ua.achievements?.name ?? "",
-          icon: ua.achievements?.icon ?? "",
-        }));
-        setAchievements(unlocked);
+        setAchievements(userAchRes.data.map((ua: any) => ({ name: ua.achievements?.name ?? "", icon: ua.achievements?.icon ?? "" })));
       }
       if (achRes.data) setAllAchievements(achRes.data);
       setLoading(false);
@@ -68,18 +62,36 @@ const Dashboard = () => {
   }
 
   const totalPoints = profile?.total_points ?? 0;
+  const lvl = getLevelInfo(totalPoints);
+  const next = getNextLevel(totalPoints);
   const gamesPlayed = scores.length;
-  const uniqueGames = new Set(scores.map((s) => s.game_slug)).size;
-  const avgScore = gamesPlayed > 0 ? Math.round(scores.reduce((a, b) => a + b.score, 0) / gamesPlayed) : 0;
+  const uniqueGames = new Set(scores.map(s => s.game_slug)).size;
   const bestScore = gamesPlayed > 0 ? Math.max(...scores.map(s => s.score)) : 0;
 
-  const chartData = scores.slice(0, 10).reverse().map((s) => ({
+  // Streak: consecutive days with scores from today backwards
+  const today = new Date();
+  let streak = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    if (scores.some(s => s.created_at.slice(0, 10) === dateStr)) streak++;
+    else break;
+  }
+
+  // Daily challenge: random game suggestion
+  const dailySeed = new Date().toISOString().slice(0, 10);
+  const dailyIdx = dailySeed.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % gamesData.length;
+  const dailyGame = gamesData[dailyIdx];
+
+  const chartData = scores.slice(0, 10).reverse().map(s => ({
     day: new Date(s.created_at).toLocaleDateString("en-US", { weekday: "short" }),
     points: s.score,
   }));
 
   const recentGames = scores.slice(0, 5);
-  const unlockedNames = new Set(achievements.map((a) => a.name));
+  const unlockedNames = new Set(achievements.map(a => a.name));
+  const quickPlayGames = gamesData.slice(0, 6);
 
   const statCards = [
     { label: "Total Points", value: totalPoints.toLocaleString(), icon: Trophy, color: "text-neon-orange", bg: "from-neon-orange/10 to-transparent" },
@@ -87,8 +99,6 @@ const Dashboard = () => {
     { label: "Unique Games", value: uniqueGames, icon: Target, color: "text-neon-green", bg: "from-neon-green/10 to-transparent" },
     { label: "Best Score", value: bestScore, icon: Zap, color: "text-neon-blue", bg: "from-neon-blue/10 to-transparent" },
   ];
-
-  const quickPlayGames = gamesData.slice(0, 6);
 
   return (
     <div className="min-h-screen pt-16">
@@ -98,14 +108,25 @@ const Dashboard = () => {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_50%,hsl(var(--primary)/0.15),transparent_60%)]" />
         <div className="container relative py-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center gap-4 mb-2">
+            <div className="flex items-center gap-4 mb-4">
               <div className="h-14 w-14 rounded-2xl gradient-neon glow-blue flex items-center justify-center">
-                <span className="text-2xl">🎮</span>
+                <span className="text-2xl">{lvl.badge}</span>
               </div>
               <div>
                 <h1 className="font-display text-3xl font-bold tracking-wider">DASHBOARD</h1>
                 <p className="text-muted-foreground">Welcome back, <span className="text-primary font-semibold">{profile?.username ?? "Player"}</span></p>
               </div>
+              <Badge className={`ml-auto ${lvl.color} border-current/30 bg-current/5 text-sm`}>
+                {lvl.badge} {lvl.level}
+              </Badge>
+            </div>
+            {/* Level progress */}
+            <div className="max-w-md">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                <span>{lvl.level}</span>
+                <span>{next ? `${next.pointsNeeded.toLocaleString()} pts to ${next.name}` : "Max level!"}</span>
+              </div>
+              <Progress value={lvl.progress} className="h-2" />
             </div>
           </motion.div>
         </div>
@@ -134,6 +155,38 @@ const Dashboard = () => {
           ))}
         </div>
 
+        {/* Streak + Daily Challenge */}
+        <div className="grid sm:grid-cols-2 gap-4 mb-8">
+          <Card className="bg-card border-border">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3 mb-2">
+                <Flame className={`h-6 w-6 ${streak > 0 ? "text-neon-orange" : "text-muted-foreground"}`} />
+                <div>
+                  <p className="text-xs text-muted-foreground">CURRENT STREAK</p>
+                  <p className="font-display text-3xl font-black">{streak} <span className="text-sm font-normal text-muted-foreground">day{streak !== 1 ? "s" : ""}</span></p>
+                </div>
+              </div>
+              {streak > 0 && <p className="text-xs text-neon-orange">🔥 Keep it going!</p>}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border group hover:border-primary/30 transition-colors">
+            <CardContent className="p-5">
+              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1"><Star className="h-3.5 w-3.5 text-neon-orange" /> DAILY CHALLENGE</p>
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{dailyGame.icon}</span>
+                <div className="flex-1">
+                  <p className="font-heading font-semibold">{dailyGame.name}</p>
+                  <p className="text-xs text-muted-foreground">Play today's featured game!</p>
+                </div>
+                <Link to={dailyGame.route}>
+                  <Button size="sm" className="gradient-neon font-display text-xs">PLAY</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Quick Play */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -158,31 +211,6 @@ const Dashboard = () => {
             ))}
           </div>
         </motion.div>
-
-        <div className="grid md:grid-cols-2 gap-4 mb-8">
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="font-display text-sm tracking-wider flex items-center gap-2">
-                <Award className="h-4 w-4 text-neon-blue" /> LEVEL
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <span className="font-heading text-lg font-bold">{profile?.level ?? "Beginner"}</span>
-              <p className="text-xs text-muted-foreground mt-1">Keep playing to level up!</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="font-display text-sm tracking-wider flex items-center gap-2">
-                <Flame className="h-4 w-4 text-neon-orange" /> AVERAGE SCORE
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <span className="font-display text-4xl font-black text-neon-orange">{avgScore}</span>
-              <span className="text-muted-foreground text-sm ml-2">pts per game</span>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Chart */}
         {chartData.length > 0 && (
@@ -226,7 +254,7 @@ const Dashboard = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{gamesData.find(gd => gd.id === g.game_slug)?.icon ?? "🎮"}</span>
                       <div>
-                        <p className="font-heading text-sm font-semibold">{g.game_slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}</p>
+                        <p className="font-heading text-sm font-semibold">{gamesData.find(gd => gd.id === g.game_slug)?.name ?? g.game_slug}</p>
                         <p className="text-xs text-muted-foreground">{new Date(g.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
@@ -246,7 +274,7 @@ const Dashboard = () => {
                 <p className="text-sm text-muted-foreground py-4 text-center">No achievements available yet.</p>
               ) : (
                 <div className="grid grid-cols-3 gap-3">
-                  {allAchievements.map((a) => (
+                  {allAchievements.map(a => (
                     <div
                       key={a.name}
                       className={`text-center p-3 rounded-lg border ${
