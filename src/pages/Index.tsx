@@ -4,6 +4,7 @@ import { Gamepad2, Trophy, Zap, Users, ArrowRight, Shield, Target, Swords, Star,
 import { Button } from "@/components/ui/button";
 import { gamesData } from "@/data/games";
 import { useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const useCountUp = (end: number, duration = 2000, startOnView = true) => {
   const [count, setCount] = useState(0);
@@ -67,10 +68,21 @@ const Index = () => {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
+  const [realStats, setRealStats] = useState({ players: 0, gamesPlayed: 0 });
+  useEffect(() => {
+    (async () => {
+      const [pRes, sRes] = await Promise.all([
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase.from("scores").select("id", { count: "exact", head: true }),
+      ]);
+      setRealStats({ players: pRes.count ?? 0, gamesPlayed: sRes.count ?? 0 });
+    })();
+  }, []);
+
   const stats = [
-    { ...useCountUp(10), label: "EPIC GAMES", suffix: "+" },
-    { ...useCountUp(5000), label: "PLAYERS", suffix: "+" },
-    { ...useCountUp(50000), label: "GAMES PLAYED", suffix: "+" },
+    { ...useCountUp(gamesData.length), label: "EPIC GAMES", suffix: "+" },
+    { ...useCountUp(realStats.players), label: "PLAYERS", suffix: "+" },
+    { ...useCountUp(realStats.gamesPlayed), label: "GAMES PLAYED", suffix: "+" },
     { ...useCountUp(24), label: "HOURS / DAY", suffix: "/7" },
   ];
 

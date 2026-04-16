@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Gamepad2, Trophy, LayoutDashboard, User, Menu, X, Bell, LogOut, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ const Navbar = () => {
   const navLinks = [
     { to: "/games", label: "Games", icon: Gamepad2, requiresAuth: false },
     { to: "/leaderboard", label: "Leaderboard", icon: Trophy, requiresAuth: false },
+    { to: "/friends", label: "Friends", icon: Users, requiresAuth: true },
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, requiresAuth: true },
     { to: "/profile", label: "Profile", icon: User, requiresAuth: true },
   ].filter((link) => !link.requiresAuth || user);
